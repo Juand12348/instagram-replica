@@ -1,40 +1,58 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "../Lib/supabaseClient";
+import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
-  const [nombre, setNombre] = useState<string>("");
-  const [email, setEmail] = useState<string>("");
-  const [telefono, setTelefono] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [message, setMessage] = useState<string | null>(null);
+  const [nombre, setNombre] = useState("");
+  const [email, setEmail] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [password, setPassword] = useState("");
+  const [mensaje, setMensaje] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
+  // 🚀 Verificar si ya hay usuario logueado
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data.user) {
+        // ✅ Usuario logueado → redirige a perfil
+        router.push("/user");
+      } else {
+        // ❌ No hay usuario → puede registrarse
+        setLoading(false);
+      }
+    };
+    checkUser();
+  }, [router]);
+
+  if (loading) return <p className="text-center mt-10">Verificando sesión...</p>;
+
+  // 🚀 Manejar registro
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // 🚀 Registrar al usuario en Supabase Auth
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
     });
 
     if (error) {
-      setMessage("❌ Error en registro: " + error.message);
+      setMensaje("❌ Error en registro: " + error.message);
       return;
     }
 
-    // ⚠️ Verificar ID de usuario
     const userId = data.user?.id;
     if (!userId) {
-      setMessage("⚠️ No se pudo obtener el ID del usuario.");
+      setMensaje("⚠️ No se pudo obtener el ID del usuario.");
       return;
     }
 
-    // 📘 Insertar datos en la tabla 'estudiantes'
     const { error: insertError } = await supabase.from("estudiantes").insert([
       {
-        id: userId, // Usamos el mismo ID de autenticación
+        id: userId,
         nombre,
         correo: email,
         telefono,
@@ -42,17 +60,19 @@ export default function RegisterPage() {
     ]);
 
     if (insertError) {
-      setMessage(
+      setMensaje(
         "⚠️ Usuario autenticado pero no guardado en la tabla: " +
           insertError.message
       );
       return;
     }
 
-    // ✅ Éxito
-    setMessage(
+    setMensaje(
       "✅ Usuario registrado y guardado correctamente. Revisa tu correo para confirmar."
     );
+
+    // 🔄 Redirigir al perfil después de registro
+    router.push("/user");
   };
 
   return (
@@ -102,7 +122,31 @@ export default function RegisterPage() {
         </button>
       </form>
 
-      {message && <p className="mt-4 text-center">{message}</p>}
+      {mensaje && <p className="mt-4 text-center">{mensaje}</p>}
+
+              de registro a login
+      {/* 🔗 Enlace a la página de login */}
+      <p className="mt-4 text-center">
+      ¿Ya tienes cuenta?{" "}
+      <button
+      onClick={() => router.push("/login")}
+      className="text-blue-600 underline"
+      >
+      Inicia sesión aquí
+      </button>
+      </p>
+
+      de login a registro
+      {/* 🔗 Enlace a la página de registro */}
+      <p className="mt-4 text-center">
+      ¿No tienes cuenta?{" "}
+      <button
+      onClick={() => router.push("/register")}
+      className="text-blue-600 underline"
+      >
+      Regístrate aquí
+      </button>
+      </p>
     </div>
   );
 }
