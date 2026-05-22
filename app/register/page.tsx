@@ -5,7 +5,6 @@ import { supabase } from "../Lib/supabaseClient";
 import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
-
   const router = useRouter();
 
   const [nombre, setNombre] = useState("");
@@ -13,53 +12,39 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const [mensaje, setMensaje] =
-    useState<string | null>(null);
-
+  const [mensaje, setMensaje] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Verificar sesión
   useEffect(() => {
-
     const checkUser = async () => {
-
-      const { data } =
-        await supabase.auth.getUser();
-
+      const { data } = await supabase.auth.getUser();
       if (data.user) {
         router.push("/feed");
       } else {
         setLoading(false);
       }
     };
-
     checkUser();
-
   }, [router]);
 
   if (loading) {
-    return (
-      <p className="text-center mt-10">
-        Verificando sesión...
-      </p>
-    );
+    return <p className="text-center mt-10">Verificando sesión...</p>;
   }
 
   // Registro
-  const handleRegister = async (
-    e: React.FormEvent<HTMLFormElement>
-  ) => {
-
+  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
     setMensaje(null);
 
+    // Delay de seguridad (Supabase requiere mínimo 3 segundos)
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+
     // 1. Crear usuario en Supabase Auth
-    const { data, error } =
-      await supabase.auth.signUp({
-        email,
-        password,
-      });
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
 
     if (error) {
       setMensaje("❌ " + error.message);
@@ -67,63 +52,50 @@ export default function RegisterPage() {
     }
 
     const user = data.user;
-
     if (!user) {
-      setMensaje("❌ No se pudo crear el usuario");
+      setMensaje("❌ No se pudo crear el usuario en Auth");
       return;
     }
 
     // 2. Guardar perfil en tabla usuarios
-    const { error: insertError } =
-      await supabase
-        .from("usuarios")
-        .insert([
-          {
-            id: user.id,
-            nombre,
-            username,
-            correo: email,
-          },
-        ]);
+    const { error: insertError } = await supabase.from("usuarios").insert([
+      {
+        id: user.id,
+        nombre,
+        username,
+        correo: email,
+        foto_perfil: null,
+        biografia: null,
+        creado_en: new Date(),
+      },
+    ]);
 
     if (insertError) {
-      setMensaje(
-        "❌ Error guardando perfil: " +
-          insertError.message
-      );
+      setMensaje("❌ Error guardando perfil: " + insertError.message);
       return;
     }
 
+    // ✅ Mensaje claro de confirmación
     setMensaje(
-      "✅ Cuenta creada correctamente"
+      "✅ Cuenta creada. Revisa tu correo y confirma antes de iniciar sesión."
     );
 
-    // 3. Redirigir
+    // 3. Redirigir al login después de unos segundos
     setTimeout(() => {
       router.push("/login");
-    }, 1500);
+    }, 3000);
   };
 
   return (
-
     <div className="max-w-sm mx-auto mt-10 p-6 border rounded-lg shadow">
+      <h1 className="text-2xl font-bold mb-6 text-center">Crear cuenta</h1>
 
-      <h1 className="text-2xl font-bold mb-6 text-center">
-        Crear cuenta
-      </h1>
-
-      <form
-        onSubmit={handleRegister}
-        className="flex flex-col gap-4"
-      >
-
+      <form onSubmit={handleRegister} className="flex flex-col gap-4">
         <input
           type="text"
           placeholder="Nombre"
           value={nombre}
-          onChange={(e) =>
-            setNombre(e.target.value)
-          }
+          onChange={(e) => setNombre(e.target.value)}
           className="border p-2 rounded"
           required
         />
@@ -132,9 +104,7 @@ export default function RegisterPage() {
           type="text"
           placeholder="Username"
           value={username}
-          onChange={(e) =>
-            setUsername(e.target.value)
-          }
+          onChange={(e) => setUsername(e.target.value)}
           className="border p-2 rounded"
           required
         />
@@ -143,55 +113,37 @@ export default function RegisterPage() {
           type="email"
           placeholder="Correo"
           value={email}
-          onChange={(e) =>
-            setEmail(e.target.value)
-          }
+          onChange={(e) => setEmail(e.target.value)}
           className="border p-2 rounded"
           required
         />
 
         <input
           type="password"
-          placeholder="Contraseña"
+          placeholder="Contraseña (mínimo 6 caracteres)"
           value={password}
-          onChange={(e) =>
-            setPassword(e.target.value)
-          }
+          onChange={(e) => setPassword(e.target.value)}
           className="border p-2 rounded"
           required
         />
 
-        <button
-          type="submit"
-          className="bg-blue-600 text-white p-2 rounded"
-        >
+        <button type="submit" className="bg-blue-600 text-white p-2 rounded">
           Registrarse
         </button>
-
       </form>
 
-      {mensaje && (
-        <p className="mt-4 text-center">
-          {mensaje}
-        </p>
-      )}
+      {mensaje && <p className="mt-4 text-center">{mensaje}</p>}
 
       {/* Login */}
       <p className="mt-4 text-center">
-
         ¿Ya tienes cuenta?{" "}
-
         <button
-          onClick={() =>
-            router.push("/login")
-          }
+          onClick={() => router.push("/login")}
           className="text-blue-600 underline"
         >
           Inicia sesión
         </button>
-
       </p>
-
     </div>
   );
 }
