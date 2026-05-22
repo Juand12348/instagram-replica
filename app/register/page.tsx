@@ -15,12 +15,13 @@ export default function RegisterPage() {
   const [mensaje, setMensaje] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Verificar sesión
+  // Verificar sesión activa
   useEffect(() => {
     const checkUser = async () => {
       const { data } = await supabase.auth.getUser();
       if (data.user) {
-        router.push("/feed");
+        // 👇 si ya hay sesión → login
+        router.push("/login");
       } else {
         setLoading(false);
       }
@@ -36,9 +37,6 @@ export default function RegisterPage() {
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setMensaje(null);
-
-    // Delay de seguridad (Supabase requiere mínimo 3 segundos)
-    await new Promise((resolve) => setTimeout(resolve, 3000));
 
     // 1. Crear usuario en Supabase Auth
     const { data, error } = await supabase.auth.signUp({
@@ -60,27 +58,25 @@ export default function RegisterPage() {
     // 2. Guardar perfil en tabla usuarios
     const { error: insertError } = await supabase.from("usuarios").insert([
       {
-        id: user.id,
+        id: user.id,       // 👈 mismo id que Auth
         nombre,
         username,
         correo: email,
-        foto_perfil: null,
-        biografia: null,
-        creado_en: new Date(),
       },
     ]);
 
     if (insertError) {
-      setMensaje("❌ Error guardando perfil: " + insertError.message);
-      return;
+      console.warn("⚠️ Perfil no guardado:", insertError.message);
+      setMensaje(
+        "✅ Cuenta creada en Auth. Revisa tu correo y confirma antes de iniciar sesión. Luego completa tu perfil."
+      );
+    } else {
+      setMensaje(
+        "✅ Cuenta creada. Revisa tu correo y confirma antes de iniciar sesión."
+      );
     }
 
-    // ✅ Mensaje claro de confirmación
-    setMensaje(
-      "✅ Cuenta creada. Revisa tu correo y confirma antes de iniciar sesión."
-    );
-
-    // 3. Redirigir al login después de unos segundos
+    // 3. Redirigir al login
     setTimeout(() => {
       router.push("/login");
     }, 3000);
@@ -134,7 +130,6 @@ export default function RegisterPage() {
 
       {mensaje && <p className="mt-4 text-center">{mensaje}</p>}
 
-      {/* Login */}
       <p className="mt-4 text-center">
         ¿Ya tienes cuenta?{" "}
         <button

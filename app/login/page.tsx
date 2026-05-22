@@ -38,15 +38,19 @@ export default function LoginPage() {
       return;
     }
 
-    // 2. Buscar perfil en tabla usuarios
+    // 2. Buscar perfil en tabla usuarios por id
     const { data: perfil, error: perfilError } = await supabase
       .from("usuarios")
       .select("*")
-      .eq("correo", email)
+      .eq("id", user.id) // 👈 usar id de Auth
       .single();
 
-    if (perfilError) {
-      setMessage("❌ Perfil no encontrado");
+    if (perfilError || !perfil) {
+      setMessage("⚠️ Sesión iniciada, pero tu perfil no está completo. Completa tu perfil en MVP.");
+      // Igual deja entrar al MVP
+      setTimeout(() => {
+        router.push("/mvp");
+      }, 1000);
       return;
     }
 
