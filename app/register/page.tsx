@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { supabase } from "../Lib/supabaseClient";
 import { useRouter } from "next/navigation";
 
@@ -13,32 +13,12 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
 
   const [mensaje, setMensaje] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  // Verificar sesión activa
-  useEffect(() => {
-    const checkUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      if (data.user) {
-        // 👇 si ya hay sesión → login
-        router.push("/login");
-      } else {
-        setLoading(false);
-      }
-    };
-    checkUser();
-  }, [router]);
-
-  if (loading) {
-    return <p className="text-center mt-10">Verificando sesión...</p>;
-  }
-
-  // Registro
+  // 🚀 Registro
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setMensaje(null);
 
-    // 1. Crear usuario en Supabase Auth
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -55,90 +35,107 @@ export default function RegisterPage() {
       return;
     }
 
-    // 2. Guardar perfil en tabla usuarios
     const { error: insertError } = await supabase.from("usuarios").insert([
       {
-        id: user.id,       // 👈 mismo id que Auth
-        nombre,
+        id: user.id,
         username,
+        nombre,
         correo: email,
+        foto_perfil: null,
+        biografia: null,
+        creado_en: new Date().toISOString(),
       },
     ]);
 
     if (insertError) {
-      console.warn("⚠️ Perfil no guardado:", insertError.message);
-      setMensaje(
-        "✅ Cuenta creada en Auth. Revisa tu correo y confirma antes de iniciar sesión. Luego completa tu perfil."
-      );
-    } else {
-      setMensaje(
-        "✅ Cuenta creada. Revisa tu correo y confirma antes de iniciar sesión."
-      );
+      setMensaje("❌ Error insertando perfil: " + insertError.message);
+      return;
     }
 
-    // 3. Redirigir al login
-    setTimeout(() => {
-      router.push("/login");
-    }, 3000);
+    // 🚀 Mensaje de confirmación
+    setMensaje("✅ Cuenta creada. Revisa tu correo y confirma antes de iniciar sesión.");
+
+    // 👉 Aquí ya NO redirigimos automáticamente al Home
+    // El flujo correcto es: Register → Login → Home
   };
 
   return (
-    <div className="max-w-sm mx-auto mt-10 p-6 border rounded-lg shadow">
-      <h1 className="text-2xl font-bold mb-6 text-center">Crear cuenta</h1>
+    <div className="w-full max-w-sm mx-auto mt-50 bg-white border border-gray-300 p-6 rounded-md shadow-md">
+      {/* Logo arriba */}
+      <div className="flex justify-center mb-6">
+        <img src="/Logo2.png" alt="Instagram" className="h-12 w-auto" />
+      </div>
 
-      <form onSubmit={handleRegister} className="flex flex-col gap-4">
-        <input
-          type="text"
-          placeholder="Nombre"
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
-          className="border p-2 rounded"
-          required
-        />
+      <h1 className="text-xl font-bold mb-4 text-center font-sans text-gray-800">
+        Crear cuenta
+      </h1>
+      <p className="text-center text-gray-600 mb-6 font-sans">
+        Regístrate para ver fotos y videos de tus amigos.
+      </p>
 
-        <input
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          className="border p-2 rounded"
-          required
-        />
+      <form onSubmit={handleRegister} className="flex flex-col gap-3">
+  <input
+    type="text"
+    placeholder="Nombre completo"
+    value={nombre}
+    onChange={(e) => setNombre(e.target.value)}
+    className="border border-gray-300 p-2 rounded text-sm font-sans 
+               placeholder-gray-600 text-gray-800 focus:outline-none focus:ring-1 focus:ring-gray-400"
+    required
+  />
 
-        <input
-          type="email"
-          placeholder="Correo"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="border p-2 rounded"
-          required
-        />
+  <input
+    type="text"
+    placeholder="Nombre de usuario"
+    value={username}
+    onChange={(e) => setUsername(e.target.value)}
+    className="border border-gray-300 p-2 rounded text-sm font-sans 
+               placeholder-gray-600 text-gray-800 focus:outline-none focus:ring-1 focus:ring-gray-400"
+    required
+  />
 
-        <input
-          type="password"
-          placeholder="Contraseña (mínimo 6 caracteres)"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="border p-2 rounded"
-          required
-        />
+  <input
+    type="email"
+    placeholder="Correo electrónico"
+    value={email}
+    onChange={(e) => setEmail(e.target.value)}
+    className="border border-gray-300 p-2 rounded text-sm font-sans 
+               placeholder-gray-600 text-gray-800 focus:outline-none focus:ring-1 focus:ring-gray-400"
+    required
+  />
 
-        <button type="submit" className="bg-blue-600 text-white p-2 rounded">
-          Registrarse
-        </button>
-      </form>
+  <input
+    type="password"
+    placeholder="Contraseña (mínimo 6 caracteres)"
+    value={password}
+    onChange={(e) => setPassword(e.target.value)}
+    className="border border-gray-300 p-2 rounded text-sm font-sans 
+               placeholder-gray-600 text-gray-800 focus:outline-none focus:ring-1 focus:ring-gray-400"
+    required
+  />
 
-      {mensaje && <p className="mt-4 text-center">{mensaje}</p>}
+  <button
+    type="submit"
+    className="bg-[#0095f6] text-white py-2 rounded font-semibold hover:bg-blue-600 transition font-sans"
+  >
+    Registrarse
+  </button>
+</form>
 
-      <p className="mt-4 text-center">
-        ¿Ya tienes cuenta?{" "}
-        <button
-          onClick={() => router.push("/login")}
-          className="text-blue-600 underline"
-        >
+
+      {mensaje && (
+        <p className="mt-4 text-center text-sm text-red-500 font-sans">{mensaje}</p>
+      )}
+
+      <p className="mt-4 text-center text-sm font-sans">
+        <span className="font-semibold text-gray-900">¿Ya tienes cuenta?</span>{" "}
+        <button onClick={() => router.push("/login")} className="text-blue-500 font-semibold">
           Inicia sesión
         </button>
       </p>
+
+      {/* Footer estilo Instagram */}
+      <div className="mt-6 text-gray-500 text-xs text-center font-sans">Meta © 2026</div>
     </div>
   );
 }

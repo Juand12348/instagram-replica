@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "../Lib/supabaseClient";
+import { supabase } from "./Lib/supabaseClient";
 import { useRouter } from "next/navigation";
 
 // 🧩 Tipos
@@ -21,10 +21,7 @@ interface Comentario {
   creado_en: string;
 }
 
-export default function MVPPage() {
-  // -------------------------------
-  // 🧠 ESTADOS
-  // -------------------------------
+export default function MVPForm() {
   const [descripcion, setDescripcion] = useState<string>("");
   const [imagen, setImagen] = useState<string>("");
   const [publicaciones, setPublicaciones] = useState<Publicacion[]>([]);
@@ -33,35 +30,17 @@ export default function MVPPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const router = useRouter();
 
-  // -----------------------------------------
-  // 🚀 FUNCIÓN 1: Cargar publicaciones
-  // -----------------------------------------
   const fetchPublicaciones = async () => {
     const { data, error } = await supabase
       .from("publicaciones")
       .select("id, descripcion, imagen, usuario_id, creado_en")
       .order("creado_en", { ascending: false });
 
-    if (error) {
-      console.error("❌ Error al cargar publicaciones:", error.message);
-    } else {
-      setPublicaciones(data || []);
-    }
+    if (!error) setPublicaciones(data || []);
   };
 
-  // -------------------------------------------------
-  // 🚀 FUNCIÓN 2: Cargar comentarios del usuario actual
-  // -------------------------------------------------
   const fetchComentarios = async () => {
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-
-    if (userError) {
-      console.error("❌ Error al obtener usuario:", userError.message);
-      setMensaje("⚠️ Error al obtener usuario");
-      setLoading(false);
-      return;
-    }
-
+    const { data: userData } = await supabase.auth.getUser();
     const user = userData?.user;
     if (!user) {
       setMensaje("⚠️ No hay usuario logueado");
@@ -69,32 +48,19 @@ export default function MVPPage() {
       return;
     }
 
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("comentarios")
       .select("id, comentario, usuario_id, publicacion_id, creado_en")
       .eq("usuario_id", user.id)
       .order("creado_en", { ascending: false });
 
-    if (error) {
-      console.error("❌ Error al cargar comentarios:", error.message);
-    } else {
-      setComentarios(data || []);
-    }
+    setComentarios(data || []);
     setLoading(false);
   };
 
-  // -------------------------------------------------
-  // 🚀 FUNCIÓN 3: Subir nueva publicación
-  // -------------------------------------------------
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    if (userError) {
-      setMensaje("⚠️ Error al obtener usuario");
-      return;
-    }
-
+    const { data: userData } = await supabase.auth.getUser();
     const user = userData?.user;
     if (!user) {
       setMensaje("⚠️ Debes iniciar sesión para subir publicaciones");
@@ -116,80 +82,56 @@ export default function MVPPage() {
       setMensaje("✅ Publicación subida correctamente");
       setDescripcion("");
       setImagen("");
-      fetchPublicaciones(); // 🔄 Actualizamos la lista
+      fetchPublicaciones();
     }
   };
 
-  // -------------------------------------------------
-  // 🌀 useEffect
-  // -------------------------------------------------
   useEffect(() => {
     fetchPublicaciones();
     fetchComentarios();
   }, []);
 
-  useEffect(() => {
-    const checkUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      if (!data.user) {
-        router.push("/login");
-      } else {
-        setLoading(false);
-      }
-    };
-    checkUser();
-  }, [router]);
+  if (loading) return <p className="text-center text-white">⏳ Cargando...</p>;
 
-  if (loading) return <p className="text-center">⏳ Cargando...</p>;
-
-  // -------------------------------------------------
-  // 🎨 INTERFAZ VISUAL
-  // -------------------------------------------------
   return (
-    <div className="max-w-lg mx-auto mt-10 p-6 border rounded-lg shadow">
-      <h1 className="text-2xl font-bold text-center mb-6">
-        Subir Publicación (MVP)
-      </h1>
+    <div className="max-w-lg mx-auto p-6 rounded-lg bg-black text-white border border-gray-700">
+      <h1 className="text-xl font-bold text-center mb-6">Nueva publicación</h1>
 
       {/* 📋 FORMULARIO */}
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3 mb-8">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4 mb-8">
         <textarea
-          placeholder="Descripción"
+          placeholder="Escribe un caption..."
           value={descripcion}
           onChange={(e) => setDescripcion(e.target.value)}
-          className="border p-2 rounded"
+          className="w-full p-3 rounded bg-black text-white border border-gray-700 focus:outline-none focus:border-gray-400"
         />
         <input
           type="text"
           placeholder="URL de imagen"
           value={imagen}
           onChange={(e) => setImagen(e.target.value)}
-          className="border p-2 rounded"
+          className="w-full p-3 rounded bg-black text-white border border-gray-700 focus:outline-none focus:border-gray-400"
         />
         <button
           type="submit"
-          className="bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+          className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded"
         >
-          Subir Publicación
+          Publicar
         </button>
       </form>
 
       {/* Mensaje */}
-      {mensaje && <p className="text-center mb-4">{mensaje}</p>}
+      {mensaje && <p className="text-center mb-4 text-sm">{mensaje}</p>}
 
       {/* 🧾 LISTADO DE PUBLICACIONES */}
-      <h2 className="text-xl font-semibold mb-3 text-center">
-        Mis Publicaciones
-      </h2>
+      <h2 className="text-lg font-semibold mb-3 text-center">Mis publicaciones</h2>
       {publicaciones.length === 0 ? (
-        <p className="text-center text-gray-600">
-          No has subido publicaciones aún.
-        </p>
+        <p className="text-center text-gray-400">No has subido publicaciones aún.</p>
       ) : (
         <div className="space-y-4">
           {publicaciones.map((pub) => (
-            <div key={pub.id} className="border p-4 rounded shadow-sm">
-              <p className="text-gray-700">{pub.descripcion}</p>
+            <div key={pub.id} className="bg-black border border-gray-700 p-4 rounded">
+              <p className="text-white">{pub.descripcion}</p>
               {pub.imagen && (
                 <img
                   src={pub.imagen}
@@ -197,7 +139,7 @@ export default function MVPPage() {
                   className="rounded mt-2 w-full max-w-md object-cover"
                 />
               )}
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 mt-1">
                 Publicado: {new Date(pub.creado_en).toLocaleString()}
               </p>
             </div>
