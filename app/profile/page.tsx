@@ -79,7 +79,8 @@ export default function UsuarioPage() {
     }
 
     setMensaje("✅ Perfil actualizado");
-    fetchUsuario();
+    await fetchUsuario();
+    setShowMVP(false);
   };
 
   useEffect(() => {
@@ -95,17 +96,12 @@ export default function UsuarioPage() {
     return <p className="text-center text-white">⏳ Cargando...</p>;
   }
 
-  return (
-    <div className="bg-black min-h-screen text-white">
+return (
+<div className="bg-black min-h-screen text-white">
   {/* Header estilo Instagram */}
   <header className="flex items-center justify-between p-4 border-b border-gray-800">
-    {/* Izquierda */}
     <PlusCircleIcon className="h-7 w-7 text-white cursor-pointer" />
-
-    {/* Centro */}
-    <h1 className="text-xl font-bold">{usuario?.username}</h1>
-
-    {/* Derecha */}
+    <h1 className="text-xl font-bold">{usuario?.username || "d.v.d.craker"}</h1>
     <div className="flex items-center gap-4">
       <div className="relative">
         <BellIcon className="h-6 w-6 text-white cursor-pointer" />
@@ -113,116 +109,112 @@ export default function UsuarioPage() {
           9+
         </span>
       </div>
-      <Bars3Icon className="h-6 w-6 text-white cursor-pointer" />
+      <Bars3Icon
+  onClick={() => router.push("/admin")}
+  className="h-6 w-6 text-white cursor-pointer"
+/>
     </div>
   </header>
 
-  {/* Perfil */}
-  {usuario && (
-    <section className="p-4">
-      {/* Avatar + Stats */}
-      <div className="flex items-center gap-6">
-        <img
-          src={
-            usuario.foto_perfil ||
-            "https://i.pinimg.com/736x/e3/83/46/e38346f2f54a83d250a52314f52bf0d5.jpg"
-          }
-          alt="avatar"
-          className="h-24 w-24 rounded-full border-2 border-gray-700"
-        />
-        <div className="flex gap-6 text-center">
-          <div>
-            <p className="font-bold">0</p>
-            <p className="text-gray-400 text-sm">Publicaciones</p>
-          </div>
-          <div>
-            <p className="font-bold">579</p>
-            <p className="text-gray-400 text-sm">Seguidores</p>
-          </div>
-          <div>
-            <p className="font-bold">183</p>
-            <p className="text-gray-400 text-sm">Seguidos</p>
-          </div>
+  {/* Perfil simulado */}
+  <section className="p-4">
+    <div className="flex items-center gap-6">
+      <img
+        src={
+          usuario?.foto_perfil ||
+          "https://i.pinimg.com/736x/e3/83/46/e38346f2f54a83d250a52314f52bf0d5.jpg"
+        }
+        alt="avatar"
+        className="h-24 w-24 rounded-full border-2 border-gray-700"
+      />
+      <div className="flex gap-6 text-center">
+        <div>
+          <p className="font-bold">0</p>
+          <p className="text-gray-400 text-sm">Publicaciones</p>
+        </div>
+        <div>
+          <p className="font-bold">579</p>
+          <p className="text-gray-400 text-sm">Seguidores</p>
+        </div>
+        <div>
+          <p className="font-bold">183</p>
+          <p className="text-gray-400 text-sm">Seguidos</p>
         </div>
       </div>
+    </div>
 
-      {/* Nombre + Bio */}
-      <div className="mt-3">
-        <p className="font-semibold">{usuario.nombre}</p>
-        <p className="text-sm mt-1">{usuario.biografia}</p>
-      </div>
+    <div className="mt-3">
+      <p className="font-semibold">{nombre || "Sarmiento David"}</p>
+      <p className="text-sm mt-1">
+        {biografia ||
+          "Loading... No Deberías Hablar Sin Saber BARDERO$ MDB Crew ⚡ Visca el Barça 💙❤️"}
+      </p>
+    </div>
 
-      {/* Botones de acción */}
-      <div className="flex gap-2 mt-4">
-        <button className="flex-1 bg-gray-800 text-white py-1 rounded">
-          Editar perfil
-        </button>
-        <button className="flex-1 bg-gray-800 text-white py-1 rounded">
-          Compartir perfil
-        </button>
-        <button className="flex-1 bg-gray-800 text-white py-1 rounded">
-          Agregar
-        </button>
-      </div>
-
-      {/* Highlights simulados */}
-      <section className="flex gap-4 mt-6">
-        {["Nuevo", "Are you Ready", "MDB"].map((label, i) => (
-          <div key={i} className="flex flex-col items-center">
-            <div className="h-16 w-16 rounded-full border-2 border-gray-700 flex items-center justify-center">
-              <span className="text-xs">{label[0]}</span>
-            </div>
-            <p className="text-xs mt-1">{label}</p>
-          </div>
-        ))}
-      </section>
-
-      {/* Grid de publicaciones dummy */}
-      <section className="grid grid-cols-3 gap-1 mt-6">
-        <img src="/Perfil1.jpg" alt="post" className="w-full h-32 object-cover" />
-        <img src="/Perfil2.jpg" alt="post" className="w-full h-32 object-cover" />
-        <img src="/Perfil3.jpg" alt="post" className="w-full h-32 object-cover" />
-      </section>
-    </section>
-  )}
-
-  {/* Formulario de edición */}
-  {usuario && (
-    <form onSubmit={handleUpdate} className="flex flex-col gap-4 px-4 mt-6">
-      <input
-        type="text"
-        value={nombre}
-        onChange={(e) => setNombre(e.target.value)}
-        placeholder="Nombre"
-        className="bg-black border border-gray-700 p-2 rounded text-white"
-      />
-      <input
-        type="text"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-        placeholder="Username"
-        className="bg-black border border-gray-700 p-2 rounded text-white"
-      />
-      <textarea
-        value={biografia}
-        onChange={(e) => setBiografia(e.target.value)}
-        placeholder="Biografía"
-        className="bg-black border border-gray-700 p-2 rounded text-white"
-      />
-      <input
-        type="email"
-        value={usuario.correo}
-        readOnly
-        className="bg-gray-800 border border-gray-700 p-2 rounded text-gray-400"
-      />
+    <div className="flex gap-2 mt-4">
       <button
-        type="submit"
-        className="bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
+        onClick={() => setShowMVP(true)}
+        className="flex-1 bg-gray-800 text-white py-1 rounded"
       >
-        Guardar
+        Editar perfil
       </button>
-    </form>
-  )}
+    </div>
+
+    {/* Highlights simulados */}
+    <section className="flex gap-4 mt-6">
+      {["Nuevo", "Are you Ready", "MDB"].map((label, i) => (
+        <div key={i} className="flex flex-col items-center">
+          <div className="h-16 w-16 rounded-full border-2 border-gray-700 flex items-center justify-center">
+            <span className="text-xs">{label[0]}</span>
+          </div>
+          <p className="text-xs mt-1">{label}</p>
+        </div>
+      ))}
+    </section>
+
+    {/* Grid de publicaciones dummy */}
+    <section className="grid grid-cols-3 gap-1 mt-6">
+      <img src="/Supra.jpg" alt="post" className="w-full h-32 object-cover" />
+      <img src="/M4.jpg" alt="post" className="w-full h-32 object-cover" />
+      <img src="/Porshe.jpg" alt="post" className="w-full h-32 object-cover" />
+    </section>
+  </section>
+
+  {/* Modal de edición estilo Instagram */}
+{/* Modal de edición estilo Instagram */}
+{showMVP && (
+  <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+    <div className="bg-gray-900 p-6 rounded-lg w-80">
+      <h2 className="text-lg font-bold mb-4">Editar nombre</h2>
+      <form
+        onSubmit={handleUpdate}
+        className="flex flex-col gap-4"
+      >
+        <input
+          type="text"
+          value={nombre}
+          onChange={(e) => setNombre(e.target.value)}
+          placeholder="Nombre"
+          className="bg-black border border-gray-700 p-2 rounded text-white"
+        />
+        <button
+          type="submit"
+          className="bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
+        >
+          Guardar
+        </button>
+        <button
+          type="button"
+          onClick={() => setShowMVP(false)}
+          className="bg-gray-700 text-white p-2 rounded hover:bg-gray-600"
+        >
+          Cancelar
+        </button>
+      </form>
+    </div>
+  </div>
+)}
+
 
   {mensaje && <p className="mt-4 text-center">{mensaje}</p>}
 
@@ -245,5 +237,5 @@ export default function UsuarioPage() {
     </button>
   </footer>
 </div>
-  );
+);
 }

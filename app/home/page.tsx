@@ -42,7 +42,10 @@ export default function HomePage() {
       {/* Barra superior estilo Instagram */}
 <header className="mt-4 bg-black p-4 flex items-center justify-between">
   {/* Botón izquierda */}
-  <PlusCircleIcon className="h-7 w-7 text-white cursor-pointer" />
+  <PlusCircleIcon
+  onClick={() => router.push("/admin")}
+  className="h-7 w-7 text-white cursor-pointer"
+/>
 
   {/* Logo centrado */}
   <h1 className="text-2xl font-bold text-white font-[cursive]">Instagram</h1>
